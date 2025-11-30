@@ -158,6 +158,11 @@ class Sidebar(ttk.Frame):
         self.tree_menu = tk.Menu(self, tearoff=0)
         self.tree.bind("<Button-3>", self.show_tree_menu)
 
+        # Drag and Drop for Pinned List
+        self.pinned_list.bind('<ButtonPress-1>', self.on_drag_start)
+        self.pinned_list.bind('<B1-Motion>', self.on_drag_motion)
+        self.pinned_list.bind('<ButtonRelease-1>', self.on_drop)
+
     def show_pinned_menu(self, event):
         # Select item under cursor
         index = self.pinned_list.nearest(event.y)
@@ -219,3 +224,37 @@ class Sidebar(ttk.Frame):
         else:
             ConfigManager.remove_pinned_file(path)
         self.refresh_pinned()
+
+    # --- Drag and Drop Logic ---
+    def on_drag_start(self, event):
+        self.drag_start_index = self.pinned_list.nearest(event.y)
+        # Allow default selection behavior to happen so we can see what we clicked
+        # But we might want to suppress the file loading if it's a drag?
+        # For now, let's just track the index.
+
+    def on_drag_motion(self, event):
+        # Optional: Visual feedback could go here
+        pass
+
+    def on_drop(self, event):
+        target_index = self.pinned_list.nearest(event.y)
+        if self.drag_start_index is not None and target_index != self.drag_start_index:
+            files = ConfigManager.get_pinned_files()
+            if self.drag_start_index < len(files) and target_index < len(files):
+                # Move item
+                item = files.pop(self.drag_start_index)
+                files.insert(target_index, item)
+                
+                # Save
+                config = ConfigManager.load_config()
+                config["pinned_files"] = files
+                ConfigManager.save_config(config)
+                
+                self.refresh_pinned()
+                
+                # Restore selection
+                self.pinned_list.selection_clear(0, tk.END)
+                self.pinned_list.selection_set(target_index)
+                self.pinned_list.activate(target_index)
+                
+        self.drag_start_index = None

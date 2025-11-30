@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Tarqim
+Comment=Lightweight Markdown Viewer
+Exec=python3 /var/my-apps/tarqim/main.py
+Icon=utilities-terminal
+Terminal=false
+Type=Application
+Categories=Utility;TextEditor;

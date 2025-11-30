@@ -148,6 +148,9 @@ class Sidebar(ttk.Frame):
     def create_context_menus(self):
         # Pinned List Menu
         self.pinned_menu = tk.Menu(self, tearoff=0)
+        self.pinned_menu.add_command(label="Move Up", command=lambda: self.move_selected_list_item('up'))
+        self.pinned_menu.add_command(label="Move Down", command=lambda: self.move_selected_list_item('down'))
+        self.pinned_menu.add_separator()
         self.pinned_menu.add_command(label="Unpin", command=self.unpin_selected_list_item)
         self.pinned_list.bind("<Button-3>", self.show_pinned_menu)
         
@@ -163,6 +166,26 @@ class Sidebar(ttk.Frame):
             self.pinned_list.selection_set(index)
             self.pinned_list.activate(index)
             self.pinned_menu.post(event.x_root, event.y_root)
+
+    def move_selected_list_item(self, direction):
+        selection = self.pinned_list.curselection()
+        if selection:
+            index = selection[0]
+            files = ConfigManager.get_pinned_files()
+            if index < len(files):
+                path = files[index]
+                ConfigManager.move_pinned_file(path, direction)
+                self.refresh_pinned()
+                
+                # Reselect the moved item
+                new_index = index
+                if direction == 'up' and index > 0:
+                    new_index = index - 1
+                elif direction == 'down' and index < len(files) - 1:
+                    new_index = index + 1
+                
+                self.pinned_list.selection_set(new_index)
+                self.pinned_list.activate(new_index)
 
     def unpin_selected_list_item(self):
         selection = self.pinned_list.curselection()

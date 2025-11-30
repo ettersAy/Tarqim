@@ -40,7 +40,7 @@ class MainWindow:
         self.status_frame.pack(side=tk.BOTTOM, fill=tk.X)
         
         # Sidebar Toggle
-        self.btn_sidebar = ttk.Button(self.status_frame, text="◀☰", width=4, command=self.toggle_sidebar)
+        self.btn_sidebar = ttk.Button(self.status_frame, text="◀ ☰", width=4, command=self.toggle_sidebar)
         self.btn_sidebar.pack(side=tk.LEFT)
         
         # Stats Label
@@ -70,10 +70,10 @@ class MainWindow:
     def toggle_sidebar(self):
         if self.sidebar_visible:
             self.paned.forget(self.sidebar)
-            self.btn_sidebar.config(text="☰▶")
+            self.btn_sidebar.config(text="☰ ▶")
         else:
             self.paned.insert(0, self.sidebar, weight=1)
-            self.btn_sidebar.config(text="◀☰")
+            self.btn_sidebar.config(text="◀ ☰")
         self.sidebar_visible = not self.sidebar_visible
 
     def update_stats(self, lines: int, chars: int):

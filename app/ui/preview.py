@@ -27,11 +27,71 @@ class PreviewPanel(ttk.Frame):
         self.btn_copy.pack(side=tk.RIGHT, padx=2)
         
         # Text Area
-        self.text_area = tk.Text(self, wrap=tk.WORD, padx=30, pady=30, borderwidth=0, highlightthickness=0, state=tk.DISABLED)
+        self.text_area = tk.Text(self, wrap=tk.WORD, padx=30, pady=30, borderwidth=0, highlightthickness=0, state=tk.DISABLED, undo=True)
         self.text_area.pack(fill=tk.BOTH, expand=True)
         
         # Bindings
         self.text_area.bind("<KeyRelease>", self.on_text_change)
+        self.setup_shortcuts()
+
+    def setup_shortcuts(self):
+        self.text_area.bind("<Control-a>", self.select_all)
+        self.text_area.bind("<Control-c>", self.copy_text)
+        self.text_area.bind("<Control-v>", self.paste_text)
+        self.text_area.bind("<Control-x>", self.cut_text)
+        self.text_area.bind("<Control-z>", self.undo_text)
+        self.text_area.bind("<Control-y>", self.redo_text)
+
+    def select_all(self, event=None):
+        self.text_area.tag_add("sel", "1.0", "end")
+        return "break"
+
+    def copy_text(self, event=None):
+        if not self.text_area.tag_ranges("sel"):
+            return
+        self.clipboard_clear()
+        text = self.text_area.get("sel.first", "sel.last")
+        self.clipboard_append(text)
+        return "break"
+
+    def paste_text(self, event=None):
+        if not self.is_editing: return
+        try:
+            text = self.clipboard_get()
+            if self.text_area.tag_ranges("sel"):
+                self.text_area.delete("sel.first", "sel.last")
+            self.text_area.insert("insert", text)
+            self.on_text_change()
+        except tk.TclError:
+            pass
+        return "break"
+
+    def cut_text(self, event=None):
+        if not self.is_editing: return
+        if not self.text_area.tag_ranges("sel"):
+            return
+        self.copy_text()
+        self.text_area.delete("sel.first", "sel.last")
+        self.on_text_change()
+        return "break"
+
+    def undo_text(self, event=None):
+        if not self.is_editing: return
+        try:
+            self.text_area.edit_undo()
+            self.on_text_change()
+        except tk.TclError:
+            pass
+        return "break"
+
+    def redo_text(self, event=None):
+        if not self.is_editing: return
+        try:
+            self.text_area.edit_redo()
+            self.on_text_change()
+        except tk.TclError:
+            pass
+        return "break"
 
     def load_content(self, text: str, file_path: str = ""):
         self.current_content = text
@@ -39,6 +99,12 @@ class PreviewPanel(ttk.Frame):
         self.path_label.config(text=file_path)
         self.is_editing = False
         self.btn_edit.config(text="📝") # Reset to edit icon
+        
+        # Clear undo stack on load
+        try:
+            self.text_area.edit_reset()
+        except:
+            pass
         
         self.render_view()
         self.update_stats()
